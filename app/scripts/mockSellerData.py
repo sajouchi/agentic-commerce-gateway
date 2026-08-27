@@ -2,10 +2,12 @@ import random
 from typing import List
 
 from faker import Faker
+import pandas as pd
 
-from app.db.sellerDatabase import insertDatabase,sellerDatabase
+from app.db.sellerDatabase import fetch_oneColumn, insertDatabase,sellerDatabase, simple_fetchAll
 from app.db.sellerPolicies import insert_itemPolicy
 from app.core.embeddingFunctions import embedContent
+from app.schema.allSchema import discount_tier
 
 Faker.seed(42)
 fake = Faker()
@@ -115,3 +117,78 @@ def genFakeEntries(amt:int) -> List[dict]:
         product_entries.append(entry.model_dump() | {"vector_embedding":embed_of_entry})
     
     return product_entries
+
+def populate_sellerDatabase(amt:int,csv:bool=False):
+    entries = genFakeEntries(amt=amt)
+    for entry in entries:
+        insertDatabase(**entry)
+      
+    if csv:  
+        result = simple_fetchAll()
+        rows_list= []
+
+        for entry in result:    
+            
+            entry_df = {"sku":entry.sku,
+                        "item":entry.item,
+                        "price_base":entry.price_base,
+                        "description":entry.description,
+                        "min_order_qty":entry.min_order_qty,
+                        "stock_quantity":entry.stock_quantity,
+                        "category":entry.category,
+                        "company":entry.company,
+                        "location_availability":entry.location_availability} # not include the vector embeddings 
+            
+        rows_list.append(entry_df)
+        
+        try:
+            df = pd.DataFrame(data=rows_list)
+            df.to_csv("mock_data.csv",index=False)
+            print("saved <mock_data.csv> file!")
+        except Exception as e:
+            print(f"error :- {e}")
+            
+def populate_sellerPolicies():
+    """
+        function to populate the seller policis for each 'sku' item in database.
+    """
+    all_sku = fetch_oneColumn("sku")
+    min_quantity =  fetch_oneColumn("min_order_qty")
+
+    min = [10,20,45]
+    values = [5,8,15]
+    
+    dis_tiers:List[discount_tier] = []
+    
+    for m,v in zip(min,values):
+        temp = discount_tier(min_qty=m,value=v)
+        dis_tiers.append(temp)
+    
+    dis_tiers = [dis.model_dump() for dis in dis_tiers]
+    
+    for sku,min_qty in zip(all_sku,min_quantity,strict=True):
+        insert_itemPolicy(sku=sku,min_order_qty=min_qty,
+                          absolute_min_price=random.randint(15,130),
+                          discount_tiers=dis_tiers)
+
+    print("Entered pollicies into db!")
+
+def fake_data_gen(amt:int) -> bool:
+    """
+    Generates argumented amount of fake data for item,
+    Which gets saved to both policies and item database.
+
+    Args:
+        amt (int): the numbers of fake items data.
+    Returns:
+        bool value, 'True' for successfull generation and entry, 
+        while 'False' for failure.
+    """ 
+    try:
+        populate_sellerDatabase(amt=amt)
+        populate_sellerPolicies()
+        return True
+    except Exception as e:
+        return False
+    
+    

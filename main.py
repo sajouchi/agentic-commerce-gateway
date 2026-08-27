@@ -1,58 +1,62 @@
-from app.scripts.mockSellerData import genFakeEntries
-from app.db.sellerDatabase import insertDatabase, simple_fetchAll
+from app.scripts.mockSellerData import fake_data_gen
 
-import pandas as pd
-
-def main():
-    print("hello")
+if __name__=="__main__":
+    fake_data_gen(85)
     
-def insert(amt:int):
-    entries = genFakeEntries(amt=amt)
-    for entry in entries:
-        insertDatabase(**entry)
+# from app.db.sellerDatabase import insertDatabase, simple_fetchAll
 
-def search():
-    # result = simpleVector_search(query="electronics")
-    result = simple_fetchAll()
-    return result
+# import pandas as pd
 
-## fill the database with mock data ###
-
-try:
-    insert(75)
-    print("Inserted Mock Datasets!")
-except Exception as e:
-    print(f"error - {e}")
-
-## Get all mock data from the db ##
-result = search()
-rows_list= []
-
-for entry in result:    
+# def main():
+#     print("hello")
     
-    entry_df = {"sku":entry.sku,
-                "item":entry.item,
-                "price_base":entry.price_base,
-                "description":entry.description,
-                "min_order_qty":entry.min_order_qty,
-                "stock_quantity":entry.stock_quantity,
-                "category":entry.category,
-                "company":entry.company,
-                "location_availability":entry.location_availability} # not include the vector embeddings 
-    
-    rows_list.append(entry_df)
-    
-    print(entry.sku)
-    print(entry.item)
-    print(entry.category)
-    print(entry.company)
-    print(entry.location_availability)
-    print(".................................")
+# def insert(amt:int):
+#     entries = genFakeEntries(amt=amt)
+#     for entry in entries:
+#         insertDatabase(**entry)
 
-# storing to .csv file ##
-try:
-    df = pd.DataFrame(data=rows_list)
-    df.to_csv("mock_data.csv",index=False)
-except Exception as e:
-    print(f"error :- {e}")
+# def search():
+#     # result = simpleVector_search(query="electronics")
+#     result = simple_fetchAll()
+#     return result
+
+# ## fill the database with mock data ###
+
+# try:
+#     insert(75)
+#     print("Inserted Mock Datasets!")
+# except Exception as e:
+#     print(f"error - {e}")
+
+# ## Get all mock data from the db ##
+# result = search()
+# rows_list= []
+
+# for entry in result:    
+    
+#     entry_df = {"sku":entry.sku,
+#                 "item":entry.item,
+#                 "price_base":entry.price_base,
+#                 "description":entry.description,
+#                 "min_order_qty":entry.min_order_qty,
+#                 "stock_quantity":entry.stock_quantity,
+#                 "category":entry.category,
+#                 "company":entry.company,
+#                 "location_availability":entry.location_availability} # not include the vector embeddings 
+    
+#     rows_list.append(entry_df)
+    
+#     print(entry.sku)
+#     print(entry.item)
+#     print(entry.category)
+#     print(entry.company)
+#     print(entry.location_availability)
+#     print(".................................")
+
+# # storing to .csv file ##
+# try:
+#     df = pd.DataFrame(data=rows_list)
+#     df.to_csv("mock_data.csv",index=False)
+# except Exception as e:
+#     print(f"error :- {e}")
 

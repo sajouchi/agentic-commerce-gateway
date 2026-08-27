@@ -20,7 +20,7 @@ class sellerDatabase(SQLModel,table=True):
     location_availability:str = Field(default=None)
     vector_embedding: list[float] = Field(sa_type=VECTOR(VECTOR_DIMENSIONS),nullable=True) # set dimension size according the model output size
 
-db_url = "postgresql://test:test@localhost:5432/commerce_db"
+db_url = "postgresql://test2:test2@localhost:5432/commerce_db"
 
 engine = create_engine(url=db_url,echo=True) # echo shows the sql quried running in order
 
