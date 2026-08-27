@@ -17,16 +17,20 @@ class filters_metadata(BaseModel):
     brand:Optional[str] = Field(default=None)
 
 class Negotiation(BaseModel):
-    sku:Optional[str] = Field(default=None)
-    buyer_price:Optional[int] = Field(default=None)
-    qty:Optional[int] = Field(default=None)
-    
-    status:Literal['ACCEPT','REJECT','COUNTER'] = Field(default=None)
+
+    status:Literal['COUNTER'] = Field(default=None)
     counter_price:int = Field(default=None) 
-    final_price:int = Field(default=None)
+
     reason:str = Field(default=None)
     
     retry_attempts:int = Field(default=3)
+    
+
+class finalize(BaseModel):
+    
+    final_price:int = Field(default=None)
+    status:Literal['ACCEPT','REJECT'] = Field(default=None)
+    reason:str = Field(default=None)
     
     checkout_url:str = Field(default=None)
     expires_in:str = Field(default=None)

@@ -1,7 +1,7 @@
 from typing import List, Literal
 from pydantic import BaseModel, Field
 
-from app.schema.allSchema import filters_metadata, searchResult, Negotiation, buyersChoice_schema
+from app.schema.allSchema import filters_metadata, finalize, searchResult, Negotiation, buyersChoice_schema
 
 ### search input/output schema ###
 
@@ -11,7 +11,9 @@ class queryAgent_Schema(BaseModel):
     filters:filters_metadata = Field(default_factory=filters_metadata)
     output:List[searchResult] = []
     negotiation:Negotiation = Field(default_factory=Negotiation)
-    chat_response:str = Field(default=None)
+    final_result:finalize = Field(default_factory=finalize)
+    negotiation_response:str = Field(default=None)
+    accept_reject_response:str = Field(default=None)
     buyers_choice:buyersChoice_schema = Field(default_factory=buyersChoice_schema)
     
 class queryAgent_outputSchema(BaseModel):

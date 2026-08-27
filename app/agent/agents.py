@@ -6,7 +6,7 @@ from langchain_groq import ChatGroq
 
 from app.agent.agent_schema import queryAgent_outputSchema
 from app.schema.allSchema import Negotiation
-from app.agent.prompts.system_prompts import intent_system_prompt,negotiation_system_prompt
+from app.agent.prompts.system_prompts import intent_system_prompt,negotiation_system_prompt,end_bot_prompt
 load_dotenv()
 
 os.environ['GROQ_API_KEY']=os.getenv("groq_api_key")
@@ -27,13 +27,26 @@ intent_retrieve_agent = intent_prompt | intent_retrive_model_with_schema
 
 #### Friendly Negotiation Agent ###
 
-negotiation_payment_prompt = ChatPromptTemplate.from_messages(
+negotiation_prompt = ChatPromptTemplate.from_messages(
                     [
                         SystemMessage(content=negotiation_system_prompt),
                         HumanMessagePromptTemplate.from_template("{user_input}")
                     ]
                     )
 
-negotiation_payment_agent = ChatGroq(model="openai/gpt-oss-20b")
-negotiation_agent = negotiation_payment_prompt | negotiation_payment_agent
+negotiation_doing_agent = ChatGroq(model="openai/gpt-oss-20b")
+negotiation_agent = negotiation_prompt | negotiation_doing_agent
 
+### Acception or Rejection or Payment Checkout Response Agent ###
+
+accept_reject_prompt = ChatPromptTemplate.from_messages(
+
+                        [
+                            SystemMessage(content=end_bot_prompt),
+                            HumanMessagePromptTemplate.from_template("{user_input}")
+                        ]
+                        
+                        )
+
+accept_reject_doing_agent = ChatGroq(model="openai/gpt-oss-20b")
+accept_reject_agent = accept_reject_prompt | accept_reject_doing_agent

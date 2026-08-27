@@ -4,7 +4,7 @@ from app.agent.agent_schema import queryAgent_Schema, queryAgent_outputSchema
 from app.db.sellerDatabase import fetch_bySku
 from app.db.sellerPolicies import fetchItem_sku
 from app.schema.allSchema import Negotiation, searchResult
-from app.agent.agents import intent_retrieve_agent,negotiation_agent
+from app.agent.agents import intent_retrieve_agent,negotiation_agent,accept_reject_agent
 
 URL = "http://127.0.0.1:8000/api/v1/search" # Post-api url hardcoded local hosted fast api
 
@@ -31,7 +31,7 @@ def call_search_api(state:dict) -> dict:
 def buyer_sim(state:queryAgent_Schema) -> queryAgent_Schema:
     sku = state.output[0].sku
     target_price = state.output[0].price_base - 2
-    qty = state.output[0].min_order_qty-2
+    qty = state.output[0].min_order_qty+2
 
     return {
             "buyers_choice":{
@@ -43,6 +43,17 @@ def buyer_sim(state:queryAgent_Schema) -> queryAgent_Schema:
 ### Selling Price Guardrails and Poilicies Check function ###
 
 def price_guardrail(state:queryAgent_Schema) -> queryAgent_Schema:
+    
+        attempts_left = state.negotiation.retry_attempts
+        
+        if attempts_left <= 0:
+            return {
+                    "final_result":{
+                                    "status":"REJECT",
+                                    "reason":"retry attempts excedded the limit! "
+                                   }
+                   }
+            
         sku = state.buyers_choice.sku or "" # hardcoded the first serached item for now! no user choice iteraction for now!
         target_price = state.buyers_choice.target_price or ""
         qty = state.buyers_choice.qty or ""
@@ -52,7 +63,7 @@ def price_guardrail(state:queryAgent_Schema) -> queryAgent_Schema:
         ### minimum order quantity rule check! ###
         if qty < min_order_qty:
             return {
-                    "negotiation":{
+                    "final_result":{
                                     "status":"REJECT",
                                     "reason":f"Quantity {qty} below minimum order quantity of {item_policies['min_order_qty']}"
                                   }
@@ -73,7 +84,7 @@ def price_guardrail(state:queryAgent_Schema) -> queryAgent_Schema:
         
         final_item_unit_price = max(after_discount_price,item_policies['absolute_min_price'])
         guardrail_triggered = after_discount_price < item_policies['absolute_min_price']
-
+        
         if guardrail_triggered:
             return {
                     "negotiation":{
@@ -86,11 +97,12 @@ def price_guardrail(state:queryAgent_Schema) -> queryAgent_Schema:
                     }
         if not guardrail_triggered:
             return {
-                    "negotiation":{
+                    "final_result":{
                                     "status":"ACCEPT",
                                     "final_price":final_item_unit_price,
-                                    "retry_attempts":state.negotiation.retry_attempts-1,
-                                    "guardrail_triggered":guardrail_triggered
+                                    "guardrail_triggered":guardrail_triggered,
+                                    "checkout_url":"https://example.com/mock/razorpay/checkout?order_id=order_test_123", # fake link for demo
+                                    "expires_in":"10 minutes" # fake time for demo
                                 }
                     }
     
@@ -105,32 +117,40 @@ def AgentQuery_Gen(state:queryAgent_Schema) -> queryAgent_Schema: # return updat
            "filters":response.filters
            }                        
 
-### setting the negotiation node function ###
+### setting the counter negotiation node function ###
 
-def negotiation_payment_gen(state:queryAgent_Schema) -> queryAgent_Schema: # return updates the state_schema for the next node to work with
+def counter_negotiation(state:queryAgent_Schema) -> queryAgent_Schema: # return updates the state_schema for the next node to work with
     
     chat_input = str(state.negotiation.model_dump_json())
     response = negotiation_agent.invoke({'user_input':chat_input})
     
     return {
-            "chat_response":response.content or ""
+            "negotiation_response":response.content or ""
            }
 
+### setting the reject or accept with final checkout link message node function ###
+
+def final_response(state:queryAgent_Schema) -> queryAgent_Schema:
+    chat_input = str(state.final_result.model_dump_json())
+    response = accept_reject_agent.invoke({"user_input":chat_input})
+    
+    return {
+            "accept_reject_response":response.content or ""
+           }
+    
 ### conditional routing function ###
 
 def conditional_rounting(state:queryAgent_Schema) -> str:
     negotiation = state.negotiation.status
-    
-    if state.negotiation.retry_attempts == 0:
-        return "end"
+    final_result = state.final_result.status
 
     print(negotiation)
-    if negotiation == "REJECT":
-        return "end"
-    elif negotiation == "COUNTER":
+    if negotiation == "COUNTER":
         return "counter"
-    elif negotiation == "ACCEPT":
-        return "payment"
+    elif final_result == "ACCEPT":
+        return "bot"
+    elif final_result == "REJECT":
+        return "bot"
     
-    return "end"
+    return "bot"
     
