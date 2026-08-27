@@ -2,10 +2,6 @@ import json
 from app.agent.agent_state_graph import graph,visual_graph
 visual_graph()
 
-# from app.db.sellerPolicies import insert_itemPolicy
-# insert_itemPolicy(sku='GIFT-22392',absolute_min_price=47, min_order_qty=15,discount_tiers=[{"min_qty": 10, "discount_type": "percentage", 
-#                                          "value": 5}, {"min_qty": 20, "discount_type": "percentage", "value": 8}, {"min_qty": 45, "discount_type": "percentage", "value": 15}])
-
 output = graph.invoke(input={"input":
          "A garmant bag of price 200. I wanna but around 89 units of it"})
 
