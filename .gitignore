@@ -1,0 +1,20 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# code runner generated
+tempCodeRunnerFile.py
+
+# Virtual environments
+.venv
+.env
+
+# folders
+.vscode/
+mock_data.csv
+final_end_flow.txt
+flow.txt
