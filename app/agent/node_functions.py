@@ -31,7 +31,7 @@ def call_search_api(state:dict) -> dict:
 def buyer_sim(state:queryAgent_Schema) -> queryAgent_Schema:
     sku = state.output[0].sku
     target_price = state.output[0].price_base - 2
-    qty = 15
+    qty = state.output[0].min_order_qty-2
 
     return {
             "buyers_choice":{
@@ -87,7 +87,7 @@ def price_guardrail(state:queryAgent_Schema) -> queryAgent_Schema:
         if not guardrail_triggered:
             return {
                     "negotiation":{
-                                    "status":"ACCEPTED",
+                                    "status":"ACCEPT",
                                     "final_price":final_item_unit_price,
                                     "retry_attempts":state.negotiation.retry_attempts-1,
                                     "guardrail_triggered":guardrail_triggered
@@ -109,12 +109,12 @@ def AgentQuery_Gen(state:queryAgent_Schema) -> queryAgent_Schema: # return updat
 
 def negotiation_payment_gen(state:queryAgent_Schema) -> queryAgent_Schema: # return updates the state_schema for the next node to work with
     
-    input = state.negotiation.model_dump()
-    response = negotiation_agent.invoke({'user_input':input})
+    chat_input = str(state.negotiation.model_dump_json())
+    response = negotiation_agent.invoke({'user_input':chat_input})
     
     return {
-            "chat_response":response.content
-            }
+            "chat_response":response.content or ""
+           }
 
 ### conditional routing function ###
 
@@ -125,7 +125,7 @@ def conditional_rounting(state:queryAgent_Schema) -> str:
         return "end"
 
     print(negotiation)
-    if negotiation == "REJECTED":
+    if negotiation == "REJECT":
         return "end"
     elif negotiation == "COUNTER":
         return "counter"

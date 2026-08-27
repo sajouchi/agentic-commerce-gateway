@@ -34,7 +34,7 @@ builder = StateGraph(state_schema=queryAgent_Schema)
 builder.add_node("agent_node",AgentQuery_Gen)
 builder.add_node("api_call_node",call_search_api)
 builder.add_node("buyers_choice_node",buyer_sim)
-builder.add_node("negotiation_node",negotiation_payment_gen)
+builder.add_node("agent_negotiation_node",negotiation_payment_gen)
 builder.add_node("price_guardrail_node",price_guardrail)
 
 builder.add_edge(START,"agent_node")
@@ -42,11 +42,11 @@ builder.add_edge("agent_node","api_call_node")
 builder.add_edge("api_call_node","buyers_choice_node")
 builder.add_edge("buyers_choice_node","price_guardrail_node")
 builder.add_conditional_edges("price_guardrail_node",conditional_rounting,{
-                                                                        "end":END,
-                                                                        "counter":"negotiation_node",
-                                                                        "payment":END
+                                                                        "end":"agent_negotiation_node",
+                                                                        "counter":"agent_negotiation_node",
+                                                                        "payment":"agent_negotiation_node"
                                                                      })
-builder.add_edge("negotiation_node","price_guardrail_node")
+builder.add_edge("agent_negotiation_node",END)
 
 graph = builder.compile()
 

@@ -9,7 +9,7 @@ print(output['query'])
 print(output['filters'])
 print(json.dumps(output['output'],indent=4))
 print(json.dumps(output['negotiation'],indent=4))
-print(output['chat_response'])
+print(output.get('chat_response'))
 
 # from app.tools.tools import call_search_api
 

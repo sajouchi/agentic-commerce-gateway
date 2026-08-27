@@ -173,6 +173,7 @@ def populate_sellerPolicies():
 
     print("Entered pollicies into db!")
 
+### main function ##
 def fake_data_gen(amt:int) -> bool:
     """
     Generates argumented amount of fake data for item,

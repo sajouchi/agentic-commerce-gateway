@@ -103,7 +103,7 @@ Before processing, check the validity of the backend payload in {user_input}:
 
 ### HANDLING VALID RESPONSES BASED ON STATUS
 
-1. STATUS: "REJECTED"
+1. STATUS: "REJECT"
 - Objective: Gracefully and professionally decline the buyer's offer.
 - Guidelines: 
   - Express gratitude for their offer.
@@ -130,7 +130,7 @@ Before processing, check the validity of the backend payload in {user_input}:
 
 [Input for {user_input}]:
 {
-  "status": "REJECTED",
+  "status": "REJECT",
   "reason": "Insufficient stock"
 }
 [Your Output]:
