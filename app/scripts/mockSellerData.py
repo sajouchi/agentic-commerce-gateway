@@ -139,7 +139,7 @@ def populate_sellerDatabase(amt:int,csv:bool=False):
                         "company":entry.company,
                         "location_availability":entry.location_availability} # not include the vector embeddings 
             
-        rows_list.append(entry_df)
+            rows_list.append(entry_df)
         
         try:
             df = pd.DataFrame(data=rows_list)
@@ -154,21 +154,22 @@ def populate_sellerPolicies():
     """
     all_sku = fetch_oneColumn("sku")
     min_quantity =  fetch_oneColumn("min_order_qty")
+    price_base = fetch_oneColumn("price_base")
 
-    min = [10,20,45]
+    minimum = [10,20,45]
     values = [5,8,15]
     
     dis_tiers:List[discount_tier] = []
     
-    for m,v in zip(min,values):
+    for m,v in zip(minimum,values):
         temp = discount_tier(min_qty=m,value=v)
         dis_tiers.append(temp)
     
     dis_tiers = [dis.model_dump() for dis in dis_tiers]
     
-    for sku,min_qty in zip(all_sku,min_quantity,strict=True):
+    for sku,min_qty,pb in zip(all_sku,min_quantity,price_base,strict=True):
         insert_itemPolicy(sku=sku,min_order_qty=min_qty,
-                          absolute_min_price=random.randint(15,130),
+                          absolute_min_price=random.randint(max(1, int(pb * 0.5)),pb),
                           discount_tiers=dis_tiers)
 
     print("Entered pollicies into db!")

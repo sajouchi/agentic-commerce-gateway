@@ -5,8 +5,9 @@ from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplat
 from langchain_groq import ChatGroq
 
 from app.agent.agent_schema import queryAgent_outputSchema
-from app.schema.allSchema import Negotiation
-from app.agent.prompts.system_prompts import intent_system_prompt,negotiation_system_prompt,end_bot_prompt
+from app.schema.allSchema import buyersResponse
+from app.agent.prompts.system_prompts import (intent_system_prompt,negotiation_system_prompt,
+                                              end_bot_prompt, negotiation_buyer_response_prompt)
 load_dotenv()
 
 os.environ['GROQ_API_KEY']=os.getenv("groq_api_key")
@@ -50,3 +51,18 @@ accept_reject_prompt = ChatPromptTemplate.from_messages(
 
 accept_reject_doing_agent = ChatGroq(model="openai/gpt-oss-20b")
 accept_reject_agent = accept_reject_prompt | accept_reject_doing_agent
+
+### Buyers Response After Counter Offers (negotiation Stage 2nd step) ###
+
+buyers_response_prompt = ChatPromptTemplate.from_messages(
+
+                        [
+                            SystemMessage(content=negotiation_buyer_response_prompt),
+                            HumanMessagePromptTemplate.from_template("{user_input}")
+                        ]
+                        
+                        )
+
+buyers_response_model_agent = ChatGroq(model="openai/gpt-oss-20b")
+buyers_response_with_schema = buyers_response_model_agent.with_structured_output(schema=buyersResponse,method="json_mode")
+buyers_response_agent = buyers_response_prompt | buyers_response_with_schema

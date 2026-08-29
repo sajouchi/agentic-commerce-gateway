@@ -19,3 +19,4 @@ mock_data.csv
 final_end_flow.txt
 flow.txt
 human-in-the-loop.ipynb
+*.png

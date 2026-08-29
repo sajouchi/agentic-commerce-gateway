@@ -12,7 +12,7 @@ class sellerPolicies(SQLModel,table=True):
     discount_tiers:List[dict[str,Any]] = Field(default=[],sa_column=Column(JSON))
 
 # postgresql://<user>:<password>@<host>:<port>/<database_name>
-db_url = "postgresql://test2:test2@localhost:5432/commerce_db"
+db_url = "postgresql://test3:test3@localhost:5432/commerce_db"
 
 engine = create_engine(url=db_url,echo=True) # echo shows the sql quried running in order
 

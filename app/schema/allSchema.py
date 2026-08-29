@@ -19,6 +19,8 @@ class filters_metadata(BaseModel):
 class Negotiation(BaseModel):
 
     status:Literal['COUNTER'] = Field(default=None)
+    
+    qty:Optional[int] = Field(default=None)
     counter_price:int = Field(default=None) 
 
     reason:str = Field(default=None)
@@ -36,9 +38,16 @@ class finalize(BaseModel):
     expires_in:str = Field(default=None)
     
 class buyersChoice_schema(BaseModel):
-    sku:str = Field(default=None)
+    sku:str = Field(default=None) # just for demo, prod will not have sku as user won't provide that
     target_price:int = Field(default=None)
     qty:int = Field(default=None)
+
+class buyersResponse(BaseModel):
+    target_price:Optional[int] = Field(default=None)
+    qty:Optional[int] = Field(default=None)
+    response:Literal['BUYERS_COUNTER_PRICE',
+                     "BUYER_REJECT_OFFER",
+                     "BUYER_ACCEPT_COUNTER_OFFER"] = Field(default=None)
     
 class discount_tier(BaseModel):
     min_qty:int = Field(default=None,description="the minimum qty required to be eligible this tier discounnt")
