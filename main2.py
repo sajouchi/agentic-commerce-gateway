@@ -1,11 +1,13 @@
-import json
 from uuid import uuid4
-from app.agent.agent_state_graph import graph,visual_graph,initiate_graph,human_response
-visual_graph()
+from app.agent.agent_state_graph import (graph,visual_graph,
+                                         initiate_graph,human_response)
+
+visual = visual_graph()
 
 ### running the graph ##
 
-thread = {"configurable":{"thread_id":str(uuid4())}}
+thread_id = str(uuid4())
+thread = {"configurable":{"thread_id":thread_id}}
 
 search="I wanna buy about 60 garment bags, preferably under 150"
 

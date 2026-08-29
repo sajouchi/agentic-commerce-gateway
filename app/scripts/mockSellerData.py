@@ -4,10 +4,11 @@ from typing import List
 from faker import Faker
 import pandas as pd
 
-from app.db.sellerDatabase import fetch_oneColumn, insertDatabase,sellerDatabase, simple_fetchAll
+from app.db.sellerDatabase import (fetch_oneColumn, insertDatabase,
+                                  SellerDatabase, simple_fetchAll)
 from app.db.sellerPolicies import insert_itemPolicy
 from app.core.embeddingFunctions import embedContent
-from app.schema.allSchema import discount_tier
+from app.schema.allSchema import DiscountTier
 
 Faker.seed(42)
 fake = Faker()
@@ -17,15 +18,15 @@ fake = Faker()
 #     item:str = Field(nullable=False)
 #     category:str
 #     company:str
-#     price_base:int
-#     min_order_qty:int 
-#     stock_quantity:int 
-#     location_availability:str
+#     priceBase:int
+#     minOrderQty:int 
+#     stockQuantity:int 
+#     locationAvailability:str
 #     vector_embedding: list[float] = Field(sa_type=VECTOR(VECTOR_DIMENSIONS)) # set dimension size according the model output size
 
 
 categories = ["Electronics", "Executive Stationery", "Drinkware", "Travel Accessories"]
-locations_available = ["New York, USA","San Francisco, USA","London, UK"]
+locationsAvailable = ["New York, USA","San Francisco, USA","London, UK"]
 
 electronics = [
     "MagSafe Power Bank",
@@ -84,7 +85,7 @@ def genFakeEntries(amt:int) -> List[dict]:
     
     for _ in range(amt):
         category = random.choice(categories)
-        locations = str(f"{random.choice(locations_available)}")
+        locations = str(f"{random.choice(locationsAvailable)}")
         company = fake.company()
         
         if category == "Electronics":
@@ -101,20 +102,20 @@ def genFakeEntries(amt:int) -> List[dict]:
             description = f"item - {item}, category - {category}"
 
         sku = f"GIFT-{random.randint(10000, 99999)}"
-        price_base = random.randint(15,250)
-        stock_quantity = random.randint(100,799)
-        min_order_qty = random.randint(5,89)
+        priceBase = random.randint(15,250)
+        stockQuantity = random.randint(100,799)
+        minOrderQty = random.randint(5,89)
         
-        entry = sellerDatabase(sku=sku,item=item,description=description,
+        entry = SellerDatabase(sku=sku,item=item,description=description,
                               category=category,company=company,
-                              price_base=price_base,
-                              min_order_qty=min_order_qty,
-                              stock_quantity=stock_quantity,
-                              location_availability=locations)
+                              priceBase=priceBase,
+                              minOrderQty=minOrderQty,
+                              stockQuantity=stockQuantity,
+                              locationAvailability=locations)
         
         embed_of_entry = embedContent(entry.model_dump_json(include=["description"]))
         
-        product_entries.append(entry.model_dump() | {"vector_embedding":embed_of_entry})
+        product_entries.append(entry.model_dump() | {"vectorEmbeddings":embed_of_entry})
     
     return product_entries
 
@@ -131,13 +132,13 @@ def populate_sellerDatabase(amt:int,csv:bool=False):
             
             entry_df = {"sku":entry.sku,
                         "item":entry.item,
-                        "price_base":entry.price_base,
+                        "priceBase":entry.priceBase,
                         "description":entry.description,
-                        "min_order_qty":entry.min_order_qty,
-                        "stock_quantity":entry.stock_quantity,
+                        "minOrderQty":entry.minOrderQty,
+                        "stockQuantity":entry.stockQuantity,
                         "category":entry.category,
                         "company":entry.company,
-                        "location_availability":entry.location_availability} # not include the vector embeddings 
+                        "locationAvailability":entry.locationAvailability} # not include the vector embeddings 
             
             rows_list.append(entry_df)
         
@@ -153,28 +154,29 @@ def populate_sellerPolicies():
         function to populate the seller policis for each 'sku' item in database.
     """
     all_sku = fetch_oneColumn("sku")
-    min_quantity =  fetch_oneColumn("min_order_qty")
-    price_base = fetch_oneColumn("price_base")
+    min_quantity =  fetch_oneColumn("minOrderQty")
+    priceBase = fetch_oneColumn("priceBase")
 
     minimum = [10,20,45]
     values = [5,8,15]
     
-    dis_tiers:List[discount_tier] = []
+    dis_tiers:List[DiscountTier] = []
     
     for m,v in zip(minimum,values):
-        temp = discount_tier(min_qty=m,value=v)
+        temp = DiscountTier(min_qty=m,value=v)
         dis_tiers.append(temp)
     
     dis_tiers = [dis.model_dump() for dis in dis_tiers]
     
-    for sku,min_qty,pb in zip(all_sku,min_quantity,price_base,strict=True):
-        insert_itemPolicy(sku=sku,min_order_qty=min_qty,
-                          absolute_min_price=random.randint(max(1, int(pb * 0.5)),pb),
-                          discount_tiers=dis_tiers)
+    for sku,min_qty,pb in zip(all_sku,min_quantity,priceBase,strict=True):
+        insert_itemPolicy(sku=sku,minOrderQty=min_qty,
+                          absoluteMinPrice=random.randint(max(1, int(pb * 0.5)),pb),
+                          discountTiers=dis_tiers)
 
     print("Entered pollicies into db!")
 
-### main function ##
+### main function ###
+
 def fake_data_gen(amt:int) -> bool:
     """
     Generates argumented amount of fake data for item,
@@ -191,6 +193,8 @@ def fake_data_gen(amt:int) -> bool:
         populate_sellerPolicies()
         return True
     except Exception as e:
-        return False
-    
+        print(f"\nFAILED")
+        print(f"Exception: {type(e).__name__}")
+        print(f"Message: {e}")
+        raise
     

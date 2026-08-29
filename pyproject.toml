@@ -1,6 +1,7 @@
 [project]
 name = "agent-commerce-gateway"
 version = "0.1.0"
+
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -128,7 +129,15 @@ dependencies = [
     "zstandard==0.25.0",
 ]
 
+[tool.uv]
+package=true
+
+
 [dependency-groups]
 dev = [
     "ipykernel>=7.3.0",
 ]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
