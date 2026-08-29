@@ -9,7 +9,7 @@ class queryAgent_Schema(BaseModel):
     input:str = Field(default=None)
     query:str = Field(default=None)
     
-    buyer_response_to_neogtiation:Optional[str] = Field(default=None)
+    buyer_response_to_negotiation:Optional[str] = Field(default=None)
     
     filters:filters_metadata = Field(default_factory=filters_metadata)
     output:List[searchResult] = []

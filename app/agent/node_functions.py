@@ -9,7 +9,7 @@ from app.agent.agents import intent_retrieve_agent,negotiation_agent,accept_reje
 URL = "http://127.0.0.1:8000/api/v1/search" # Post-api url hardcoded local hosted fast api
 
 ### call search_api function ###
-def call_search_api(state:dict) -> dict:
+def call_search_api(state:queryAgent_Schema) -> queryAgent_Schema:
     
     query = state.query or ""
     filter_data = state.filters or ""
@@ -28,10 +28,12 @@ def call_search_api(state:dict) -> dict:
 
 ### buyer's choice simulating function (for demo run checks) ###
 
-def buyer_sim(state:queryAgent_Schema) -> queryAgent_Schema:
-    sku = state.output[0].sku
-    target_price = 1 # just for demo to test COUNTER node
-    qty = state.output[0].min_order_qty+2
+def buyers_request_sim(state:queryAgent_Schema) -> queryAgent_Schema:
+    sku = state.output[0].sku # obtained by the queried vector search result from db
+    
+    # by the search query from the buyer
+    target_price = 57  # just for demo to test COUNTER node
+    qty = state.filters.qty
 
     return {
             "buyers_choice":{
@@ -56,8 +58,13 @@ def price_guardrail(state:queryAgent_Schema) -> queryAgent_Schema:
                    }
             
         sku = state.buyers_choice.sku or "" # hardcoded the first serached item for now! no user choice iteraction for now!
-        target_price = state.buyers_choice.target_price or ""
-        qty = state.buyers_choice.qty or ""
+        
+        if state.buyers_response.response == "BUYERS_COUNTER_PRICE":
+            target_price = state.buyers_response.target_price or None
+            qty = state.buyers_response.qty or None
+        else:
+            target_price = state.buyers_choice.target_price or None
+            qty = state.buyers_choice.qty or None
         
         item_policies = fetchItem_sku(sku=sku)
         min_order_qty = item_policies['min_order_qty']
@@ -81,17 +88,25 @@ def price_guardrail(state:queryAgent_Schema) -> queryAgent_Schema:
                 applicable_discount = rule['value']
                 break
         
-
+        print("------by the users search query----")
+        print("target_price",target_price)
+        print("qty",qty)
+        print("----through vector search----")
+        print("sku",sku)
+        
         after_discount_price = int(item_base_price * (1-applicable_discount/100))
+        
+        print("---after discount Price---")
+        print(after_discount_price)
         
         if target_price >= after_discount_price and target_price >= item_policies['absolute_min_price']:
             final_item_unit_price = target_price
             guardrail_triggered = False
         else:
             final_item_unit_price = max(after_discount_price,item_policies['absolute_min_price'])
-            guardrail_triggered = after_discount_price < item_policies['absolute_min_price']
+            guardrail_triggered = True
         
-        if guardrail_triggered:
+        if guardrail_triggered: 
             return {
                     "negotiation":{
                                     "status":"COUNTER",
@@ -140,8 +155,10 @@ def counter_negotiation(state:queryAgent_Schema) -> queryAgent_Schema: # return 
 
 def buyers_response_to_negotiation(state:queryAgent_Schema) -> queryAgent_Schema:
     
-    chat_input = str(state.buyer_response_to_neogtiation)
-    response:buyersResponse = buyers_response_agent({"user_input":chat_input})
+    chat_input = str(state.buyer_response_to_negotiation)
+    print(chat_input)
+    
+    response:buyersResponse = buyers_response_agent.invoke({"user_input":chat_input})
     
     return {
             "buyers_response":{
@@ -150,6 +167,52 @@ def buyers_response_to_negotiation(state:queryAgent_Schema) -> queryAgent_Schema
                                 "response":response.response or None
                               }
            }
+
+### setup the response by the buyer for the negotiation ###
+
+def response_to_negotiation(state:queryAgent_Schema) -> queryAgent_Schema:
+    
+    final_price = state.negotiation.counter_price or None
+    qty = state.buyers_response.qty or state.negotiation.qty
+    
+    print("BUYER RESPONSE:", repr(state.buyers_response.response))
+    
+    if state.buyers_response.response == "BUYERS_COUNTER_PRICE":
+        return {}
+    else:
+        
+        if state.buyers_response.response == "BUYER_REJECT_OFFER":
+            status = "REJECT"
+
+            return {
+                     "final_result":{
+                                        "status":status,
+                                        "reason":"rejected the counter offer"
+                                    }        
+                   }
+        
+        elif state.buyers_response.response is None:
+            status = None
+            return {
+                     "final_result":{
+                                        "status":status,
+                                        "reason":"got incomprehensible responseor no response received, which resulted in rejection."
+                                    }        
+                   }
+        
+        elif state.buyers_response.response == "BUYER_ACCEPT_COUNTER_OFFER":
+            status = "ACCEPT"
+        
+            return {
+                    "final_result":{
+                                    "final_price":final_price or "",
+                                    "qty":qty,
+                                    "status" : status,
+                                    "checkout_url":"https://example.com/mock/razorpay/checkout?order_id=order_test_123", # fake link for demo
+                                    "expires_in":"10 minutes" # fake time for demo
+                                    }
+                                }
+        
 
 ### setting the reject or accept with final checkout link message node function ###
 
@@ -168,23 +231,17 @@ def conditional_rounting(state:queryAgent_Schema) -> str:
     final_result = state.final_result.status
     buyers_response = state.buyers_response.response
 
-    print(negotiation)
-    if negotiation == "COUNTER":
-        return "counter"
-    elif final_result == "ACCEPT":
-        return "accept/reject"
-    elif final_result == "REJECT":
+    if final_result in ["ACCEPT","REJECT"]:
         return "accept/reject"
 
-    match buyers_response:
-        case "BUYERS_COUNTER_PRICE":
+    if buyers_response == "BUYERS_COUNTER_PRICE":
             return "counter"
 
-        case "BUYER_REJECT_OFFER" | "BUYER_ACCEPT_COUNTER_OFFER":
+    if buyers_response in ["BUYER_REJECT_OFFER","BUYER_ACCEPT_COUNTER_OFFER"]:
             return "accept/reject"
 
-        case _ :
-            return "accept/reject" 
-
+    if negotiation == "COUNTER":
+        return "counter"
+    
     return "accept/reject"
     

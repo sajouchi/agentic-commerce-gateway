@@ -18,7 +18,7 @@ class filters_metadata(BaseModel):
 
 class Negotiation(BaseModel):
 
-    status:Literal['COUNTER'] = Field(default=None)
+    status:Optional[Literal['COUNTER']] = Field(default=None)
     
     qty:Optional[int] = Field(default=None)
     counter_price:int = Field(default=None) 
@@ -33,7 +33,6 @@ class finalize(BaseModel):
     final_price:int = Field(default=None)
     status:Literal['ACCEPT','REJECT'] = Field(default=None)
     reason:str = Field(default=None)
-    
     checkout_url:str = Field(default=None)
     expires_in:str = Field(default=None)
     
