@@ -17,12 +17,13 @@ from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 from app.agent.node_functions import (SearchQueryGen, evaluateOffer, prepareBuyersRequest, resolveBuyerResponse,
                                       classifyBuyerResponse, 
                                       searchApi, 
-                                      conditional_rounting, 
+                                      conditional_rounting,
+                                      seach_result_routing, 
                                       counterResponseGen, 
                                       generateFinalResponse)
 
 from app.schema.allSchema import Filters
-from app.agent.agent_schema import AgentState
+from app.schema.agent_schema import AgentState
 from app.db.sellerPolicies import fetchItem_sku
 from app.db.sellerDatabase import fetch_bySku
 
@@ -44,6 +45,7 @@ builder = StateGraph(state_schema=AgentState)
 
 builder.add_node("agent_node",SearchQueryGen)
 builder.add_node("api_call_node",searchApi)
+
 builder.add_node("buyers_choice_node",prepareBuyersRequest)
 
 builder.add_node("agent_negotiation_node",counterResponseGen)
@@ -51,20 +53,23 @@ builder.add_node("buyers_response_node",classifyBuyerResponse)
 builder.add_node("handle_buyers_response_node",resolveBuyerResponse)
 
 builder.add_node("final_accept_reject_node",generateFinalResponse)
-builder.add_node("price_guardrail_node",evaluateOffer)
+builder.add_node("evaluate_offer_node",evaluateOffer)
 
 builder.add_edge(START,"agent_node")
 builder.add_edge("agent_node","api_call_node")
 builder.add_edge("api_call_node","buyers_choice_node")
-builder.add_edge("buyers_choice_node","price_guardrail_node")
-builder.add_conditional_edges("price_guardrail_node",conditional_rounting,{
+builder.add_conditional_edges("buyers_choice_node",seach_result_routing,{
+                                                                          "accept/reject":"final_accept_reject_node",
+                                                                          "evaluate_offer":"evaluate_offer_node"
+                                                                        })
+builder.add_conditional_edges("evaluate_offer_node",conditional_rounting,{
                                                                         "counter":"agent_negotiation_node",
                                                                         "accept/reject":"final_accept_reject_node"
                                                                      })
 builder.add_edge("agent_negotiation_node","buyers_response_node")
 builder.add_edge("buyers_response_node","handle_buyers_response_node")
 builder.add_conditional_edges("handle_buyers_response_node",conditional_rounting,{
-                                                                            "counter":"price_guardrail_node",
+                                                                            "counter":"evaluate_offer_node",
                                                                             "accept/reject":"final_accept_reject_node"
                                                                           })
 builder.add_edge("final_accept_reject_node",END)

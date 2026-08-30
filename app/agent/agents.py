@@ -4,7 +4,7 @@ from langchain_core.messages import SystemMessage
 from langchain_core.prompts import ChatPromptTemplate, HumanMessagePromptTemplate
 from langchain_groq import ChatGroq
 
-from app.agent.agent_schema import QueryOutput
+from app.schema.agent_schema import QueryOutput
 from app.schema.allSchema import BuyersResponse
 from app.agent.prompts.system_prompts import (intentSystemPrompt,counterOfferSystemPrompt,
                                               finalResponseSystemPrompt, buyerResponseSystemPrompt)

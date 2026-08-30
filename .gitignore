@@ -16,7 +16,7 @@ tempCodeRunnerFile.py
 # folders
 agent_commerce_gateway.egg-info/
 .vscode/
-mock_data.csv
+*.csv
 final_end_flow.txt
 flow.txt
 human-in-the-loop.ipynb

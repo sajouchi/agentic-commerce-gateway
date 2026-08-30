@@ -163,7 +163,7 @@ def populate_sellerPolicies():
     dis_tiers:List[DiscountTier] = []
     
     for m,v in zip(minimum,values):
-        temp = DiscountTier(min_qty=m,value=v)
+        temp = DiscountTier(minQty=m,value=v)
         dis_tiers.append(temp)
     
     dis_tiers = [dis.model_dump() for dis in dis_tiers]

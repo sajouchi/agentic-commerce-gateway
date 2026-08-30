@@ -9,14 +9,14 @@ visual = visual_graph()
 thread_id = str(uuid4())
 thread = {"configurable":{"thread_id":thread_id}}
 
-search="I wanna buy about 60 garment bags, preferably under 150"
+search="I wanna buy about 60 garment bags, preferably under 9"
 
 cur = initiate_graph(user_input=search,thread=thread)
-if cur.get('accept_reject_response') :
-    print(cur['accept_reject_response'])
+if cur.get('acceptRejectResponse') :
+    print(cur['acceptRejectResponse'])
 else: 
-    print(cur['negotiation_response'])
+    print(cur['negotiationResponse'])
     user_input = input("reply?")
     cur = human_response(user_input=user_input,thread=thread)
-    print(cur.get("accept_reject_response"))
+    print(cur.get("acceptRejectResponse"))
     

@@ -1,4 +1,5 @@
-from typing import List, Literal, Optional
+from operator import add
+from typing import List, Literal, Optional, Annotated
 from pydantic import BaseModel, Field
 
 from app.schema.allSchema import (BuyersChoice, BuyersResponse, Filters, 
@@ -16,7 +17,7 @@ class AgentState(BaseModel):
     filters:Filters = Field(default_factory=Filters)
     results:List[SearchResult] = []
     
-    negotiation:Negotiation = Field(default_factory=Negotiation)
+    negotiation:List[Negotiation] = Annotated[List[Negotiation],add] 
     finalResult:FinalResult = Field(default_factory=FinalResult)
     
     negotiationResponse:str = Field(default=None)

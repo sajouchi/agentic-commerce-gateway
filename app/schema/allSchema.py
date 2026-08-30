@@ -23,7 +23,7 @@ class Negotiation(BaseModel):
     qty:Optional[int] = Field(default=None)
     counterPrice:int = Field(default=None)
      
-    guardrailTriggered:bool | None
+    guardrailTriggered:Optional[bool] = Field(default=None)
 
     reason:str = Field(default=None)
     
@@ -33,6 +33,7 @@ class Negotiation(BaseModel):
 class FinalResult(BaseModel):
     
     finalPrice:int = Field(default=None)
+    qty:Optional[int] = Field(default=None)
     status:Literal['ACCEPT','REJECT'] = Field(default=None)
     reason:str = Field(default=None)
     checkoutUrl:str = Field(default=None)

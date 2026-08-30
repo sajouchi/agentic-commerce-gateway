@@ -1,6 +1,7 @@
+from fastapi import HTTPException,status
 import requests
 
-from app.agent.agent_schema import AgentState, QueryOutput
+from app.schema.agent_schema import AgentState, QueryOutput
 from app.db.sellerDatabase import fetch_bySku
 from app.db.sellerPolicies import fetchItem_sku
 from app.schema.allSchema import BuyersResponse, SearchResult
@@ -20,8 +21,24 @@ def searchApi(state:AgentState) -> AgentState:
     # deals with empty filters dict
     filters_json_params = filter_data.model_dump() if hasattr(filter_data,"model_dump") else filter_data
     
-    post_api = requests.post(url=URL,params=params_args,json=filters_json_params)
-    outputs = post_api.json()
+    # calling post api with error handling
+    try:
+        post_api = requests.post(url=URL,params=params_args,json=filters_json_params)
+        post_api.raise_for_status()
+        outputs = post_api.json()
+        
+    except requests.exceptions.Timeout:
+        raise HTTPException(status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                            detail="external api timed out")
+        
+    except requests.exceptions.HTTPError as e:
+        status_code = e.response.status_code if e.response is not None else 502
+        raise HTTPException(status_code = status_code,
+                            detail=f"External api error :- {str(e)}")
+        
+    except requests.exceptions.InvalidJSONError as e:
+        raise HTTPException(status_code=e.response.status_code,
+                            detail=f"invalid json passed error {str(e)}")
     
     formatted_output = [SearchResult(**output).model_dump() for output in outputs]
     
@@ -30,6 +47,15 @@ def searchApi(state:AgentState) -> AgentState:
 ### buyer's choice simulating function (for demo run checks) ###
 
 def prepareBuyersRequest(state:AgentState) -> AgentState:
+    
+    if len(state.results) == 0:
+        return {
+                    "finalResult":{
+                                    "status":"REJECT",
+                                    "reason":"no matching products were found for requested criterias."
+                                  }
+               }
+    
     sku = state.results[0].sku # obtained by the queried vector search result from db
     
     # by the search query from the buyer
@@ -49,7 +75,7 @@ def prepareBuyersRequest(state:AgentState) -> AgentState:
 def evaluateOffer(state:AgentState) -> AgentState:
         
         ## check for remaining retry attempts 
-        attempts_left = state.negotiation.retryAttempts
+        attempts_left = state.negotiation[-1].retryAttempts
     
         if attempts_left <= 0:
             return {
@@ -93,6 +119,7 @@ def evaluateOffer(state:AgentState) -> AgentState:
         print("------by the users search query----")
         print("targetPrice",targetPrice)
         print("qty",qty)
+        print("mininum_price",item_policies['absoluteMinPrice'])
         print("----through vector search----")
         print("sku",sku)
         
@@ -101,11 +128,11 @@ def evaluateOffer(state:AgentState) -> AgentState:
         print("---after discount Price---")
         print(after_discount_price)
         
-        if targetPrice >= after_discount_price and targetPrice >= item_policies['absolute_min_price']:
+        if targetPrice >= after_discount_price and targetPrice >= item_policies['absoluteMinPrice']:
             final_item_unit_price = targetPrice
             guardrail_triggered = False
         else:
-            final_item_unit_price = max(after_discount_price,item_policies['absolute_min_price'])
+            final_item_unit_price = max(after_discount_price,item_policies['absoluteMinPrice'])
             guardrail_triggered = True
         
         if guardrail_triggered: 
@@ -115,7 +142,7 @@ def evaluateOffer(state:AgentState) -> AgentState:
                                     "qty":qty,
                                     "counterPrice":final_item_unit_price,
                                     "guardrailTriggered":guardrail_triggered,
-                                    "retryAttempts":state.negotiation.retryAttempts-1,
+                                    "retryAttempts":state.negotiation[-1].retryAttempts-1,
                                     "reason":"the price of each unit can't go below absolute miniumum price! the given counter price is the best discounted price."
                                 }
                     }
@@ -126,6 +153,7 @@ def evaluateOffer(state:AgentState) -> AgentState:
                                     "qty":qty,
                                     "finalPrice":final_item_unit_price,
                                     "guardrailTriggered":guardrail_triggered,
+                                    "reason":"the requested price is in acceptable range.",
                                     "checkoutUrl":"https://example.com/mock/razorpay/checkout?order_id=order_test_123", # fake link for demo
                                     "expiresIn":"10 minutes" # fake time for demo
                                 }
@@ -146,7 +174,7 @@ def SearchQueryGen(state:AgentState) -> AgentState: # return updates the state_s
 
 def counterResponseGen(state:AgentState) -> AgentState: # return updates the state_schema for the next node to work with
     
-    chat_input = str(state.negotiation.model_dump_json())
+    chat_input = str(state.negotiation[-1].model_dump_json())
     response = counterOfferAgent.invoke({'user_input':chat_input})
     
     return {
@@ -164,7 +192,7 @@ def classifyBuyerResponse(state:AgentState) -> AgentState:
     
     return {
             "buyersResponse":{
-                                "targetPrice":response.buyersCounterPrice or None,
+                                "buyersCounterPrice":response.buyersCounterPrice or None,
                                 "qty":response.qty or None,
                                 "response":response.response or None
                               }
@@ -174,7 +202,7 @@ def classifyBuyerResponse(state:AgentState) -> AgentState:
 
 def resolveBuyerResponse(state:AgentState) -> AgentState:
     
-    final_price = state.negotiation.counterPrice or None
+    final_price = state.negotiation[-1].counterPrice or None
     qty = state.buyersResponse.qty or state.negotiation.qty
     
     print("BUYER RESPONSE:", repr(state.buyersResponse.response))
@@ -207,7 +235,7 @@ def resolveBuyerResponse(state:AgentState) -> AgentState:
         
             return {
                     "finalResult":{
-                                    "final_price":final_price or "",
+                                    "finalPrice":final_price or "",
                                     "qty":qty,
                                     "status" : status,
                                     "checkoutUrl":"https://example.com/mock/razorpay/checkout?order_id=order_test_123", # fake link for demo
@@ -219,8 +247,22 @@ def resolveBuyerResponse(state:AgentState) -> AgentState:
 ### setting the reject or accept with final checkout link message node function ###
 
 def generateFinalResponse(state:AgentState) -> AgentState:
+    
+    print("\n========== FINAL RESULT OBJECT ==========")
+    print(state.finalResult)
+    print("\n========== FINAL RESULT JSON ==========")
+    print(state.finalResult.model_dump_json())
+    print("\n========== STATUS ==========")
+    print(repr(state.finalResult.status))
+    print("\n========== FINAL PRICE ==========")
+    print(repr(state.finalResult.finalPrice))
+    print("\n========== QTY ==========")
+    print(repr(state.finalResult.qty))
+    print("=========================================")
+    
     chat_input = str(state.finalResult.model_dump_json())
     response = finalResponseAgent.invoke({"user_input":chat_input})
+    print(repr(response.content))
     
     return {
             "acceptRejectResponse":response.content or None
@@ -229,7 +271,7 @@ def generateFinalResponse(state:AgentState) -> AgentState:
 ### conditional routing function ###
 
 def conditional_rounting(state:AgentState) -> str:
-    negotiation = state.negotiation.status
+    negotiation = state.negotiation[-1].status
     final_result = state.finalResult.status
     buyersResponse = state.buyersResponse.response
 
@@ -246,4 +288,10 @@ def conditional_rounting(state:AgentState) -> str:
         return "counter"
     
     return "accept/reject"
+
+def seach_result_routing(state:AgentState) -> AgentState:
     
+    if state.finalResult.status == "REJECT":
+        return "accept/reject"
+    else:
+        return "evaluate_offer"
