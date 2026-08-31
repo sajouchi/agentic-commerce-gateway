@@ -22,4 +22,4 @@ flow.txt
 *.ipynb
 *.png
 to_csv.py
-
+.ipynb_checkpoints/
