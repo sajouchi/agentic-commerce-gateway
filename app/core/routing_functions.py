@@ -10,7 +10,7 @@ def conditional_rounting(state:AgentState) -> str:
     final_result = state.finalResult.status
     buyersResponse = state.buyersResponse.response
 
-    if final_result in ["ACCEPT","REJECT"]:
+    if final_result in ["ACCEPT","REJECT","ERROR"]:
         return "accept/reject"
 
     if buyersResponse == "BUYERS_COUNTER_PRICE":
@@ -22,7 +22,6 @@ def conditional_rounting(state:AgentState) -> str:
     if negotiation == "COUNTER":
         return "counter"
 
-    
     return "accept/reject"
 
 def seach_result_routing(state:AgentState) -> AgentState:

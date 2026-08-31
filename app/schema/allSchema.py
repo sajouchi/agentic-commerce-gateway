@@ -18,7 +18,7 @@ class Filters(BaseModel):
 
 class Negotiation(BaseModel):
 
-    status:Optional[Literal['COUNTER']] = Field(default=None)
+    status:Optional[Literal['COUNTER','ERROR']] = Field(default=None)
     
     qty:Optional[int] = Field(default=None)
     counterPrice:int = Field(default=None)
@@ -34,7 +34,7 @@ class FinalResult(BaseModel):
     
     finalPrice:int = Field(default=None)
     qty:Optional[int] = Field(default=None)
-    status:Literal['ACCEPT','REJECT'] = Field(default=None)
+    status:Literal['ACCEPT','REJECT','ERROR'] = Field(default=None)
     reason:str = Field(default=None)
     checkoutUrl:str = Field(default=None)
     expiresIn:str = Field(default=None)
@@ -50,7 +50,7 @@ class BuyersResponse(BaseModel):
     qty:Optional[int] = Field(default=None)
     response:Literal['BUYERS_COUNTER_PRICE',
                      "BUYER_REJECT_OFFER",
-                     "BUYER_ACCEPT_COUNTER_OFFER"] = Field(default=None)
+                     "BUYER_ACCEPT_COUNTER_OFFER","ERROR"] = Field(default=None)
     
 class DiscountTier(BaseModel):
     minQty:int = Field(default=None,description="the minimum qty required to be eligible this tier discounnt")

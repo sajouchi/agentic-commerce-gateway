@@ -47,8 +47,12 @@ def fetchItem_sku(sku:str) -> dict:
         print(engine.url)
         
         output = session.exec(statement).first()
-        print(type(output.discounttiers))
-        print(output.discounttiers)
-        
-        return output.model_dump() # parsed json formatted output
+        if output:
+            print(type(output.discounttiers))
+            print(output.discounttiers)
 
+            return output.model_dump()
+        else:
+            print("no item fetched")
+            
+            return None

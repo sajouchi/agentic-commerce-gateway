@@ -111,7 +111,10 @@ def fetch_bySku(sku:str) -> SellerDatabase | dict:
         statement = select(SellerDatabase).where(SellerDatabase.sku==sku) # sqlmodel approach
         output = session.exec(statement).first()
         
-        return output.model_dump()
+        if output:
+            return output.model_dump()
+        else:
+            None
 
 def fetch_oneColumn(column:str) -> List[str]:
     

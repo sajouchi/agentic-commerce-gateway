@@ -10,7 +10,7 @@ def prepareBuyersRequest(state:AgentState) -> AgentState:
     if len(state.results) == 0:
         return {
                     "finalResult":{
-                                    "status":"REJECT",
+                                    "status":"ERROR",
                                     "reason":"no matching products were found for requested criterias."
                                   }
                }
@@ -115,12 +115,12 @@ def resolveBuyerResponse(state:AgentState) -> AgentState:
                                     }        
                    }
         
-        elif state.buyersResponse.response is None:
-            status = None
+        elif state.buyersResponse.response == "ERROR" or None:
+            status = "ERROR"
             return {
                      "finalResult":{
                                         "status":status,
-                                        "reason":"got incomprehensible responseor no response received, which resulted in rejection."
+                                        "reason":"got incomprehensible response or no response received, which resulted in system process error"
                                     }        
                    }
         
@@ -154,11 +154,11 @@ def generateFinalResponse(state:AgentState) -> AgentState:
     print(repr(state.finalResult.qty))
     print("=========================================")
     
-    chat_input = str(state.finalResult.model_dump_json())
+    chat_input = state.finalResult.model_dump_json()
     response = finalResponseAgent.invoke({"user_input":chat_input})
     print(repr(response.content))
     
-    return {
+    return {    
             "acceptRejectResponse":response.content or None
            }
     

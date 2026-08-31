@@ -10,7 +10,7 @@ from app.core.prep_and_response import (SearchQueryGen,prepareBuyersRequest,
                                        generateFinalResponse)
 
 from app.core.api_call_function import searchApi
-from app.core.evalute_offers import evaluateOffer
+from app.core.evaluate_offers import evaluateOffer
 from app.core.routing_functions import conditional_rounting, seach_result_routing
 
 from app.schema.allSchema import Filters
@@ -41,6 +41,7 @@ builder.add_node("evaluate_offer_node",evaluateOffer)
 builder.add_edge(START,"agent_node")
 builder.add_edge("agent_node","api_call_node")
 builder.add_edge("api_call_node","buyers_choice_node")
+
 builder.add_conditional_edges("buyers_choice_node",seach_result_routing,{
                                                                           "accept/reject":"final_accept_reject_node",
                                                                           "evaluate_offer":"evaluate_offer_node"
@@ -49,6 +50,7 @@ builder.add_conditional_edges("evaluate_offer_node",conditional_rounting,{
                                                                         "counter":"agent_negotiation_node",
                                                                         "accept/reject":"final_accept_reject_node"
                                                                      })
+
 builder.add_edge("agent_negotiation_node","buyers_response_node")
 builder.add_edge("buyers_response_node","handle_buyers_response_node")
 builder.add_conditional_edges("handle_buyers_response_node",conditional_rounting,{

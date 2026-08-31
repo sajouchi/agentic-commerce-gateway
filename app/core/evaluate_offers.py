@@ -30,20 +30,30 @@ def evaluateOffer(state:AgentState) -> AgentState:
             qty = state.buyersChoice.qty or None
         
         item_policies = fetchItem_sku(sku=sku)
-        min_order_qty = item_policies['minorderqty']
-        ### minimum order quantity rule check! ###
-        if qty < min_order_qty:
+        item_data = fetch_bySku(sku=sku)
+        
+        if item_policies and item_data:
+            
+            min_order_qty = item_policies['minorderqty']
+            item_base_price = item_data['pricebase']
+            discount_tiers = item_policies['discounttiers'] # contains the items specific discount criterias
+    
+            ### minimum order quantity rule check! ###
+            if qty < min_order_qty:
+                return {
+                        "finalResult":{
+                                        "status":"REJECT",
+                                        "reason":f"Quantity {qty} below minimum order quantity of {item_policies['min_order_qty']}"
+                                    }
+                        }    
+        else:
             return {
                     "finalResult":{
-                                    "status":"REJECT",
-                                    "reason":f"Quantity {qty} below minimum order quantity of {item_policies['min_order_qty']}"
+                                    "status":"ERROR",
+                                    "reason":"no relevent product were fetched!"
                                   }
                    }
         
-        discount_tiers = item_policies['discounttiers'] # contains the items specific discount criterias
-        item_data = fetch_bySku(sku=sku)
-        
-        item_base_price = item_data['pricebase']
         applicable_discount = 0
         
         for rule in sorted(discount_tiers,key=lambda x:x['minQty'],reverse=True):
