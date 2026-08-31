@@ -12,8 +12,8 @@ class SearchResult(BaseModel):
     minOrderQty:int | None
 
 class Filters(BaseModel):
-    price:Optional[int] = Field(default=None)
-    qty:Optional[int] = Field(default=None)
+    price:int | None = Field(default=None)
+    qty:int | None = Field(default=None)
     brand:Optional[str] = Field(default=None)
 
 class Negotiation(BaseModel):
@@ -40,10 +40,11 @@ class FinalResult(BaseModel):
     expiresIn:str = Field(default=None)
     
 class BuyersChoice(BaseModel):
-    sku:str = Field(default=None) # just for demo, prod will not have sku as user won't provide that
-    targetPrice:int = Field(default=None)
-    qty:int = Field(default=None)
-
+    sku:Optional[str] = Field(default=None) # just for demo, prod will not have sku as user won't provide that
+    targetPrice:Optional[int] = Field(default=None)
+    qty:Optional[int] = Field(default=None)
+    brand:Optional[str]  = Field(default=None)
+    
 class BuyersResponse(BaseModel):
     buyersCounterPrice:Optional[int] = Field(default=None)
     qty:Optional[int] = Field(default=None)

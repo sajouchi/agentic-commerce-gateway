@@ -17,7 +17,7 @@ class AgentState(BaseModel):
     filters:Filters = Field(default_factory=Filters)
     results:List[SearchResult] = []
     
-    negotiation:List[Negotiation] = Annotated[List[Negotiation],add] 
+    negotiation:Annotated[List[Negotiation],add] =  Field(default_factory=list) # creates a empty instance of negotiation list
     finalResult:FinalResult = Field(default_factory=FinalResult)
     
     negotiationResponse:str = Field(default=None)

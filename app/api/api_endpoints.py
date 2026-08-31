@@ -20,8 +20,8 @@ async def search(query:str,filter:Filters):
     final_output = [SearchResult(sku=output.sku,
                                     item=output.item,
                                     description=output.description,
-                                    priceBase=output.priceBase,
-                                    minOrderQty=output.minOrderQty) for output in outputs]
+                                    priceBase=output.pricebase,
+                                    minOrderQty=output.minorderqty) for output in outputs]
 
     return final_output
 

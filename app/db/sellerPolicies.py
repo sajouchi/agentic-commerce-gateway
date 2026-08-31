@@ -6,9 +6,9 @@ from app.schema.allSchema import DiscountTier
 
 class SellerPolicies(SQLModel,table=True):
     sku:str = Field(primary_key=True)
-    absoluteMinPrice:int
-    minOrderQty:int = Field(default=None)
-    discountTiers:List[dict[str,Any]] = Field(default=[],sa_column=Column(JSON))
+    absoluteminprice:int
+    minorderqty:int = Field(default=None)
+    discounttiers:List[dict[str,Any]] = Field(default=[],sa_column=Column(JSON))
 
 # postgresql://<user>:<password>@<host>:<port>/<database_name>
 db_url = "postgresql://test3:test3@localhost:5432/commerce_db"
@@ -22,17 +22,17 @@ create_db_and_table() # initialize the db and create the table
 
 ### DB FEATURE FUNCTIONS ###
 
-def insert_itemPolicy(sku:str,absoluteMinPrice:int, 
-                      minOrderQty:int,discountTiers:List[DiscountTier]):
+def insert_itemPolicy(sku:str,absoluteminprice:int, 
+                      minorderqty:int,discounttiers:List[DiscountTier]):
     
     """
     function to insert item policy for any item based on their 'sku' id.
     """
     
     itemPolicy = SellerPolicies(sku=sku,
-                                absoluteMinPrice=absoluteMinPrice,
-                                minOrderQty=minOrderQty,
-                                discountTiers=discountTiers)
+                                absoluteminprice=absoluteminprice,
+                                minorderqty=minorderqty,
+                                discounttiers=discounttiers)
      
     with Session(engine) as session:
         session.add(itemPolicy)
@@ -47,8 +47,8 @@ def fetchItem_sku(sku:str) -> dict:
         print(engine.url)
         
         output = session.exec(statement).first()
-        print(type(output.discountTiers))
-        print(output.discountTiers)
+        print(type(output.discounttiers))
+        print(output.discounttiers)
         
         return output.model_dump() # parsed json formatted output
 

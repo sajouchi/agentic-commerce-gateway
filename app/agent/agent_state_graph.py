@@ -1,39 +1,22 @@
-from typing import List,Annotated
-from pydantic import BaseModel, Field
-import requests
-
-from langchain_core.prompts import ChatPromptTemplate,HumanMessagePromptTemplate
-from langchain_core.messages import SystemMessage
-
-from langchain_groq import ChatGroq
-
 from langgraph.graph import StateGraph, START, END
-from langgraph.graph.message import add_messages
-from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import InMemorySaver
 
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
-from app.agent.node_functions import (SearchQueryGen, evaluateOffer, prepareBuyersRequest, resolveBuyerResponse,
-                                      classifyBuyerResponse, 
-                                      searchApi, 
-                                      conditional_rounting,
-                                      seach_result_routing, 
-                                      counterResponseGen, 
-                                      generateFinalResponse)
+from app.core.prep_and_response import (SearchQueryGen,prepareBuyersRequest, 
+                                        resolveBuyerResponse,
+                                       classifyBuyerResponse, 
+                                       counterResponseGen, 
+                                       generateFinalResponse)
+
+from app.core.api_call_function import searchApi
+from app.core.evalute_offers import evaluateOffer
+from app.core.routing_functions import conditional_rounting, seach_result_routing
 
 from app.schema.allSchema import Filters
 from app.schema.agent_schema import AgentState
-from app.db.sellerPolicies import fetchItem_sku
-from app.db.sellerDatabase import fetch_bySku
-
-from app.db.sellerDatabase import fetch_oneColumn
 
 from IPython.display import display,Image
-
-from dotenv import load_dotenv
-import os
-load_dotenv()
 
 ### LangGraph State Graph Build ###
 serde = JsonPlusSerializer(allowed_msgpack_modules=[Filters]) # config to avoid warning about not default custom schemas
@@ -88,7 +71,7 @@ def human_response(user_input:str,
                    thread:dict) -> AgentState:
     
     graph.update_state(thread,
-                       values={"buyer_response_to_negotiation":user_input})
+                       values={"buyerResponseToNegotiation":user_input})
     
     graph_cursor = graph.invoke(None,config=thread)
      

@@ -7,7 +7,7 @@ import pandas as pd
 from app.db.sellerDatabase import (fetch_oneColumn, insertDatabase,
                                   SellerDatabase, simple_fetchAll)
 from app.db.sellerPolicies import insert_itemPolicy
-from app.core.embeddingFunctions import embedContent
+from app.core.embedding_generator import embedContent
 from app.schema.allSchema import DiscountTier
 
 Faker.seed(42)
@@ -18,15 +18,15 @@ fake = Faker()
 #     item:str = Field(nullable=False)
 #     category:str
 #     company:str
-#     priceBase:int
-#     minOrderQty:int 
-#     stockQuantity:int 
-#     locationAvailability:str
+#     pricebase:int
+#     minorderqty:int 
+#     stockquantity:int 
+#     locationavailability:str
 #     vector_embedding: list[float] = Field(sa_type=VECTOR(VECTOR_DIMENSIONS)) # set dimension size according the model output size
 
 
 categories = ["Electronics", "Executive Stationery", "Drinkware", "Travel Accessories"]
-locationsAvailable = ["New York, USA","San Francisco, USA","London, UK"]
+locations_available = ["New York, USA","San Francisco, USA","London, UK"]
 
 electronics = [
     "MagSafe Power Bank",
@@ -85,7 +85,7 @@ def genFakeEntries(amt:int) -> List[dict]:
     
     for _ in range(amt):
         category = random.choice(categories)
-        locations = str(f"{random.choice(locationsAvailable)}")
+        locations = str(f"{random.choice(locations_available)}")
         company = fake.company()
         
         if category == "Electronics":
@@ -102,20 +102,20 @@ def genFakeEntries(amt:int) -> List[dict]:
             description = f"item - {item}, category - {category}"
 
         sku = f"GIFT-{random.randint(10000, 99999)}"
-        priceBase = random.randint(15,250)
-        stockQuantity = random.randint(100,799)
-        minOrderQty = random.randint(5,89)
+        pricebase = random.randint(15,250)
+        stockquantity = random.randint(100,799)
+        minorderqty = random.randint(5,89)
         
         entry = SellerDatabase(sku=sku,item=item,description=description,
                               category=category,company=company,
-                              priceBase=priceBase,
-                              minOrderQty=minOrderQty,
-                              stockQuantity=stockQuantity,
-                              locationAvailability=locations)
+                              pricebase=pricebase,
+                              minorderqty=minorderqty,
+                              stockquantity=stockquantity,
+                              locationavailability=locations)
         
         embed_of_entry = embedContent(entry.model_dump_json(include=["description"]))
         
-        product_entries.append(entry.model_dump() | {"vectorEmbeddings":embed_of_entry})
+        product_entries.append(entry.model_dump() | {"vectorembeddings":embed_of_entry})
     
     return product_entries
 
@@ -132,30 +132,30 @@ def populate_sellerDatabase(amt:int,csv:bool=False):
             
             entry_df = {"sku":entry.sku,
                         "item":entry.item,
-                        "priceBase":entry.priceBase,
+                        "pricebase":entry.pricebase,
                         "description":entry.description,
-                        "minOrderQty":entry.minOrderQty,
-                        "stockQuantity":entry.stockQuantity,
+                        "minorderqty":entry.minorderqty,
+                        "stockquantity":entry.stockquantity,
                         "category":entry.category,
                         "company":entry.company,
-                        "locationAvailability":entry.locationAvailability} # not include the vector embeddings 
+                        "locationavailability":entry.locationavailability} # not include the vector embeddings 
             
             rows_list.append(entry_df)
         
         try:
             df = pd.DataFrame(data=rows_list)
             df.to_csv("mock_data.csv",index=False)
-            print("saved <mock_data.csv> file!")
+            print("saved sellers products mock data to <sellerData.csv>!")
         except Exception as e:
             print(f"error :- {e}")
             
-def populate_sellerPolicies():
+def populate_sellerPolicies(csv:bool=False):
     """
         function to populate the seller policis for each 'sku' item in database.
     """
     all_sku = fetch_oneColumn("sku")
-    min_quantity =  fetch_oneColumn("minOrderQty")
-    priceBase = fetch_oneColumn("priceBase")
+    min_quantity =  fetch_oneColumn("minorderqty")
+    pricebase = fetch_oneColumn("pricebase")
 
     minimum = [10,20,45]
     values = [5,8,15]
@@ -168,16 +168,37 @@ def populate_sellerPolicies():
     
     dis_tiers = [dis.model_dump() for dis in dis_tiers]
     
-    for sku,min_qty,pb in zip(all_sku,min_quantity,priceBase,strict=True):
-        insert_itemPolicy(sku=sku,minOrderQty=min_qty,
-                          absoluteMinPrice=random.randint(max(1, int(pb * 0.5)),pb),
-                          discountTiers=dis_tiers)
+    if csv:
+        csv_df = []
+    
+    for sku,min_qty,pb in zip(all_sku,min_quantity,pricebase,strict=True):
+        
+        absoluteminprice = random.randint(max(1, int(pb * 0.5)),pb)
+        
+        if csv:
+            df = {
+                    "sku":sku,
+                    "minorderqty":min_qty,
+                    "absoluteminprice":absoluteminprice,
+                    "discounttiers":dis_tiers
+                 }
+            csv_df.append(df)
+            
+        insert_itemPolicy(sku=sku,minorderqty=min_qty,
+                          absoluteminprice=absoluteminprice,
+                          discounttiers=dis_tiers)
+    
+    if csv:
+        final_df = pd.DataFrame(csv_df)
+        final_df.to_csv("sellerPolicies.csv",index=False)
+        print("saved product policies to <sellerPolicies.csv>")
+        
 
     print("Entered pollicies into db!")
 
 ### main function ###
 
-def fake_data_gen(amt:int) -> bool:
+def fake_data_gen(amt:int, csv:bool=False) -> bool:
     """
     Generates argumented amount of fake data for item,
     Which gets saved to both policies and item database.
@@ -189,8 +210,8 @@ def fake_data_gen(amt:int) -> bool:
         while 'False' for failure.
     """ 
     try:
-        populate_sellerDatabase(amt=amt)
-        populate_sellerPolicies()
+        populate_sellerDatabase(amt=amt,csv=csv)
+        populate_sellerPolicies(csv=csv)
         return True
     except Exception as e:
         print(f"\nFAILED")
