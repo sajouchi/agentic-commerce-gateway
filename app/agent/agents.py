@@ -7,7 +7,8 @@ from langchain_groq import ChatGroq
 from app.schema.agent_schema import QueryOutput
 from app.schema.allSchema import BuyersResponse
 from app.agent.prompts.system_prompts import (intentSystemPrompt,counterOfferSystemPrompt,
-                                              finalResponseSystemPrompt, buyerResponseSystemPrompt)
+                                              finalResponseSystemPrompt, buyerResponseSystemPrompt,
+                                              payLinkMessageSystemPrompt)
 load_dotenv()
 
 os.environ['GROQ_API_KEY']=os.getenv("groq_api_key")
@@ -68,3 +69,16 @@ buyerResponseModel = ChatGroq(model="openai/gpt-oss-20b")
 buyerResponseAgent = buyerResponsePrompt | buyerResponseModel\
                                                  .with_structured_output(schema=BuyersResponse,
                                                                          method="json_mode")
+
+# payment link appear response create agent or simple bot
+
+payLinkMessagePrompt = ChatPromptTemplate.from_messages(
+
+                        [
+                            SystemMessage(content=payLinkMessageSystemPrompt),
+                            HumanMessagePromptTemplate.from_template("{pay_link}")
+                        ]
+                        
+                        )
+
+payLinkMessageAgent = ChatGroq(model="openai/gpt-oss-20b")

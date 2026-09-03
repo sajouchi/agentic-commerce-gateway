@@ -127,3 +127,13 @@ buyerResponseSystemPrompt = """You are an AI Buyer-Response Classification Assis
   "response": "<BUYER_ACCEPT_COUNTER_OFFER BUYERS_COUNTER_PRICE BUYER_REJECT_OFFER ERROR |>",
   "reason": "<string, optional, present only when response is ERROR>"
 }"""
+
+payLinkMessageSystemPrompt = """ You are an ai bot whose sole work is provide a message for showing heres the payers payment link through
+which he/she can pay through going into it.
+
+for input you may get the *payment link* = {pay_link} include that in the output with kind and foramtted output for better easy 
+understanding for the reader.
+
+**INPUT**
+"https://example.com/mock/razorpay/checkout?order_id=order_test_123"
+"""""

@@ -70,7 +70,6 @@ def counterResponseGen(state:AgentState) -> AgentState: # return updates the sta
 
 def classifyBuyerResponse(state:AgentState) -> AgentState:
     
-    
     print("----buyers response to negotiation-----")
     print(state.buyerResponseToNegotiation)
     

@@ -33,7 +33,7 @@ with Session(engine) as session:
     session.exec(text("CREATE EXTENSION IF NOT EXISTS vector"))
     session.commit()
 
-create_db_and_table() 
+# create_db_and_table() 
 
 ### DATABASE MAIN FUNCTIONS ###
 

@@ -18,7 +18,7 @@ engine = create_engine(url=db_url,echo=True) # echo shows the sql quried running
 def create_db_and_table():
     SQLModel.metadata.create_all(engine)
 
-create_db_and_table() # initialize the db and create the table 
+# create_db_and_table() # initialize the db and create the table 
 
 ### DB FEATURE FUNCTIONS ###
 

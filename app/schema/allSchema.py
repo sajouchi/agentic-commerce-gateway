@@ -50,10 +50,27 @@ class BuyersResponse(BaseModel):
     qty:Optional[int] = Field(default=None)
     response:Literal['BUYERS_COUNTER_PRICE',
                      "BUYER_REJECT_OFFER",
-                     "BUYER_ACCEPT_COUNTER_OFFER","ERROR"] = Field(default=None)
+                     "BUYER_ACCEPT_COUNTER_OFFER",
+                     "ERROR"] = Field(default=None)
     
 class DiscountTier(BaseModel):
     minQty:int = Field(default=None,description="the minimum qty required to be eligible this tier discounnt")
     discountType:str = Field(default='percentage',description="type of discount/default is %(percentage)")
     value:int = Field(default=None,description=r"the value of given discount (eg; 15% discount)")
     
+class PayWebhook(BaseModel):
+    razorpay_order_id:str = Field(default=None)
+    razorpay_payment_id:str = Field(default=None)
+    razorpay_signature:str = Field(default=None)
+    
+class UserDetails(BaseModel):
+    name:str = Field(default=None)
+    email:str = Field(default=None)
+    number:int = Field(default=None)
+
+class PaymentDetails(BaseModel):
+    amountt:int = Field(default=None)
+    currency:str = Field(default='INR')
+    description:str | None = Field(default=None)
+    accept_partial: bool = Field(default=False)
+    referenceId:str = Field(default=None)
