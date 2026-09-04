@@ -13,7 +13,8 @@ tempCodeRunnerFile.py
 .venv
 .env
 
-# folders
+# folders and other
+agent_commerce_gateway.egg-info/
 .vscode/
 *.csv
 final_end_flow.txt
