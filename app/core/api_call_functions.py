@@ -5,6 +5,7 @@ from app.schema.agent_schema import AgentState
 from app.schema.allSchema import SearchResult
 
 URL = "http://127.0.0.1:8000/api/v1/search" # Post-api url hardcoded local hosted fast api
+WEEBHOOK_URL = ""
 
 ### call search_api function ###
 def searchApi(state:AgentState) -> AgentState:

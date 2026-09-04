@@ -26,7 +26,8 @@ class AgentState(BaseModel):
     buyersChoice:BuyersChoice = Field(default_factory=BuyersChoice)
     buyersResponse:BuyersResponse = Field(default_factory=BuyersResponse)
     
-    finalPaymentURL:str = Field(default=None)
+    PaymentMessage:str = Field(default=None)
+    finalPaymentid:str = Field(default=None)
     
 class QueryOutput(BaseModel):
     query:str = Field(default=None)

@@ -1,7 +1,8 @@
 from app.schema.agent_schema import AgentState, QueryOutput
 from app.schema.allSchema import BuyersResponse
 from app.agent.agents import (intentAgent,counterOfferAgent,
-                              finalResponseAgent, buyerResponseAgent)
+                              finalResponseAgent, buyerResponseAgent,
+                              successPaymentMessageAgent )
 
 ### buyer's request structurizing function ###
 
@@ -125,14 +126,13 @@ def resolveBuyerResponse(state:AgentState) -> AgentState:
         
         elif state.buyersResponse.response == "BUYER_ACCEPT_COUNTER_OFFER":
             status = "ACCEPT"
-        
             return {
                     "finalResult":{
                                     "finalPrice":final_price or "",
                                     "qty":qty,
                                     "status" : status,
-                                    "checkoutUrl":"https://example.com/mock/razorpay/checkout?order_id=order_test_123", # fake link for demo
-                                    "expiresIn":"10 minutes" # fake time for demo
+                                    # "checkoutUrl":state.finalPaymentURL, # fake links generated for demo test razorpay api
+                                    # "expiresIn":"10 minutes" # fake time for demo
                                     }
                                 }
         
@@ -153,7 +153,7 @@ def generateFinalResponse(state:AgentState) -> AgentState:
     print(repr(state.finalResult.qty))
     print("=========================================")
     
-    chat_input = state.finalResult.model_dump_json()
+    chat_input = state.finalResult.model_dump_json(exclude_none=True)
     response = finalResponseAgent.invoke({"user_input":chat_input})
     print(repr(response.content))
     
@@ -161,3 +161,13 @@ def generateFinalResponse(state:AgentState) -> AgentState:
             "acceptRejectResponse":response.content or None
            }
     
+def successfullPaymentMessage(state:AgentState)-> AgentState:
+
+    response = successPaymentMessageAgent.invoke({"user_input":"..."})
+    
+    print("----success payment message---")
+    print(response.content)
+    return state(PaymentMessage=response.content)
+
+def failedPaymentMessage(state:AgentState)-> AgentState:
+    return state(PaymentMessage="failed payment")

@@ -6,9 +6,13 @@ from pgvector.sqlalchemy import VECTOR
 from app.core.embedding_generator import embedContent
 from app.schema.allSchema import Filters
 
+from app.db.database import engine
+
 VECTOR_DIMENSIONS = 3072 # google gemini-embedding-001 model output default size
 
 class SellerDatabase(SQLModel,table=True):
+    __table_args__ = {"extend_existing":True}
+    
     sku:str = Field(default=None,primary_key=True)
     item:str = Field(nullable=False)
     description:str = Field(default=None)
@@ -20,9 +24,9 @@ class SellerDatabase(SQLModel,table=True):
     locationavailability:str = Field(default=None)
     vectorembeddings: list[float] = Field(sa_type=VECTOR(VECTOR_DIMENSIONS),nullable=True) # set dimension size according the model output size
 
-db_url = "postgresql://test3:test3@localhost:5432/commerce_db"
+# db_url = "postgresql://test3:test3@localhost:5432/commerce_db"
 
-engine = create_engine(url=db_url,echo=True) # echo shows the sql quried running in order
+# engine = create_engine(url=db_url,echo=True) # echo shows the sql quried running in order
 
 def create_db_and_table():
     SQLModel.metadata.create_all(engine)
@@ -33,7 +37,7 @@ with Session(engine) as session:
     session.exec(text("CREATE EXTENSION IF NOT EXISTS vector"))
     session.commit()
 
-# create_db_and_table() 
+create_db_and_table() # initialize the db and create the table if not already exists
 
 ### DATABASE MAIN FUNCTIONS ###
 

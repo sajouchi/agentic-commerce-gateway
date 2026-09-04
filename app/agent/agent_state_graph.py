@@ -3,15 +3,16 @@ from langgraph.checkpoint.memory import InMemorySaver
 
 from langgraph.checkpoint.serde.jsonplus import JsonPlusSerializer
 
-from app.core.prep_and_response import (SearchQueryGen,prepareBuyersRequest, 
+from app.core.pay_integration import create_payment_link
+from app.core.prep_and_response import (SearchQueryGen, failedPaymentMessage,prepareBuyersRequest, 
                                         resolveBuyerResponse,
                                        classifyBuyerResponse, 
                                        counterResponseGen, 
-                                       generateFinalResponse)
+                                       generateFinalResponse, successfullPaymentMessage)
 
-from app.core.api_call_function import searchApi
+from app.core.api_call_functions import searchApi
 from app.core.evaluate_offers import evaluateOffer
-from app.core.routing_functions import conditional_rounting, seach_result_routing
+from app.core.routing_functions import conditional_rounting, payment_route, seach_result_routing
 
 from app.schema.allSchema import Filters
 from app.schema.agent_schema import AgentState
@@ -38,6 +39,13 @@ builder.add_node("handle_buyers_response_node",resolveBuyerResponse)
 builder.add_node("final_accept_reject_node",generateFinalResponse)
 builder.add_node("evaluate_offer_node",evaluateOffer)
 
+builder.add_node("payment_node",create_payment_link)
+
+
+# builder.add_node("success_payment_node",successfullPaymentMessage)
+# builder.add_node("fail_payment_node",failedPaymentMessage)
+
+
 builder.add_edge(START,"agent_node")
 builder.add_edge("agent_node","api_call_node")
 builder.add_edge("api_call_node","buyers_choice_node")
@@ -48,15 +56,28 @@ builder.add_conditional_edges("buyers_choice_node",seach_result_routing,{
                                                                         })
 builder.add_conditional_edges("evaluate_offer_node",conditional_rounting,{
                                                                         "counter":"agent_negotiation_node",
-                                                                        "accept/reject":"final_accept_reject_node"
+                                                                        "accept/reject":"final_accept_reject_node",
+                                                                        "payment":"payment_node"
                                                                      })
 
 builder.add_edge("agent_negotiation_node","buyers_response_node")
 builder.add_edge("buyers_response_node","handle_buyers_response_node")
 builder.add_conditional_edges("handle_buyers_response_node",conditional_rounting,{
                                                                             "counter":"evaluate_offer_node",
-                                                                            "accept/reject":"final_accept_reject_node"
+                                                                            "accept/reject":"final_accept_reject_node",
+                                                                            "payment":"payment_node"
                                                                           })
+
+# builder.add_conditional_edges("payment_node", payment_route,{
+#                                                             "success":"success_payment_node",
+#                                                             "failure":"fail_payment_node",
+#                                                            })
+
+# builder.add_edge("success_payment_node",END)
+# builder.add_edge("fail_payment_node",END)
+
+
+builder.add_edge("payment_node","final_accept_reject_node")
 builder.add_edge("final_accept_reject_node",END)
 graph = builder.compile(checkpointer=memory,interrupt_before=["buyers_response_node"])
 

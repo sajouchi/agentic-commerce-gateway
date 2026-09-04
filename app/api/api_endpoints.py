@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import FastAPI, Request
+from app.db.sellerPayments import update_payment_status
 from app.schema.allSchema import (SearchQuery, SearchResult,
                                   Filters, PayWebhook)
 
@@ -47,25 +48,28 @@ async def verify(pay_signature:PayWebhook):
         return True
     except razorpay.errors.SignatureVerificationError:
         raise "Invalid Payment Attempt"
-        
-@app.post("/razorpay/webhook")
-async def weebhook(): # checks for the caputuring payment successfull or not
-    data = await Request.json
     
-    if not data:
-        return {"status":"data not received to check capture!"}
+### weebhoook to configure on the razorpay for payment capture ###
+@app.post("/razorpay/webhook")
+async def weebhook(request:Request): # checks for the caputuring payment successfull or not
+    data = await request.json()
     
     event = data['event'] # main event data sended by the razorpay webhook
     
-    if event == "payment_captured":
-        
-        payment = data["payload"]["payment"]["entity"]
-
-        print("🎉 PAYMENT SUCCESS")
-        print("Payment ID:", payment["id"])
-        print("Amount:", payment["amount"])
-        
-        return {"status":"payment captured!"}
-    else:
-        return {"status":"not captured"}
+    # print(data)
     
+    if event == "payment_link.paid":
+
+        payment_info = data["payload"]["payment"]["entity"]
+        payment_link_id= data["payload"]["payment_link"]["entity"]["id"]
+
+        print("---PAYMENT PAID CAPTURE SUCCESS---")
+        print("payment_id:", payment_info["id"])
+        print("amount:", payment_info["amount"])
+        print("payment_link_id:",payment_link_id)
+        
+        update_payment_status(payment_link_id=payment_link_id,
+                              payment_id=str(payment_info['id']),
+                           status="paid")  
+
+    return {"status":"ok"}

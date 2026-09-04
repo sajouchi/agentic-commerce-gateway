@@ -1,3 +1,5 @@
+import time
+
 from pydantic import BaseModel, Field
 from typing import Optional, Literal, Any
 
@@ -35,7 +37,10 @@ class FinalResult(BaseModel):
     finalPrice:int = Field(default=None)
     qty:Optional[int] = Field(default=None)
     status:Literal['ACCEPT','REJECT','ERROR'] = Field(default=None)
-    reason:str = Field(default=None)
+    payment_link_id:Optional[str] = Field(default=None)
+    payment_id:Optional[str] = Field(default=None)
+    id:Optional[str] = Field(default=None)
+    reason:Optional[str] = Field(default=None)
     checkoutUrl:str = Field(default=None)
     expiresIn:str = Field(default=None)
     
@@ -69,8 +74,9 @@ class UserDetails(BaseModel):
     number:int = Field(default=None)
 
 class PaymentDetails(BaseModel):
-    amountt:int = Field(default=None)
+    amount:int = Field(default=None)
     currency:str = Field(default='INR')
     description:str | None = Field(default=None)
     accept_partial: bool = Field(default=False)
-    referenceId:str = Field(default=None)
+    reference_id:str = Field(default=None)
+    expire_by:int = Field(default=None)
