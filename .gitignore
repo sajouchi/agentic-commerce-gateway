@@ -15,7 +15,7 @@ tempCodeRunnerFile.py
 
 # folders
 .vscode/
-mock_data.csv
+*.csv
 final_end_flow.txt
 flow.txt
 *.ipynb
