@@ -21,7 +21,6 @@ fake = Faker()
 #     location_availability:str
 #     vector_embedding: list[float] = Field(sa_type=VECTOR(VECTOR_DIMENSIONS)) # set dimension size according the model output size
 
-
 categories = ["Electronics", "Executive Stationery", "Drinkware", "Travel Accessories"]
 locations_available = ["New York, USA","San Francisco, USA","London, UK"]
 

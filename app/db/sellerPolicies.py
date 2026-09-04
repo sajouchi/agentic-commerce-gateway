@@ -36,8 +36,14 @@ def insert_itemPolicy(sku:str,absolute_min_price:int,
                                 discount_tiers=discount_tiers)
      
     with Session(engine) as session:
-        session.add(itemPolicy)
-        session.commit()
+        try:
+            session.add(itemPolicy)
+            session.commit()
+            
+            print("committing to sellerpolicies complete")
+        except Exception as e:
+            session.rollback()
+            print("commtting to sellerpolicies failed, error - ",e)
 
 def fetchItem_sku(sku:str) -> dict:
     print("SKU RECEIVED:", repr(sku))
