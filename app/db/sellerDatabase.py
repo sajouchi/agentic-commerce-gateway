@@ -58,9 +58,12 @@ def insertDatabase(sku:str,item:str,category:str, description:str,
         try:
             session.add(new_item)
             session.commit()
+            
+            print("Committed new entry to sellerdatabase")
         except Exception as e:
+            
             session.rollback()
-            print("error:-",e)
+            print("committing new try to sellerdatabase failed,error - ",e)
         
 
 def searchByVector(query:str,filter:Filters,top_k:int=5)->List[SellerDatabase]:

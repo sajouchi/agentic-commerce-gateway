@@ -33,8 +33,14 @@ def create_payment_record(payment_link_id:str,
     print(entry.model_dump_json(exclude_none=True))
     
     with Session(engine) as session:
-        session.add(entry)
-        session.commit()
+        
+        try:
+            session.add(entry)
+            session.commit()
+            print("committing new record initial to sellerpayments")
+        except Exception as e:
+            session.rollback()
+            print("committing to sellerpayments failed, error - ",e)
 
 def update_payment_status(payment_link_id:str,
                           payment_id:str,
