@@ -23,6 +23,5 @@ flow.txt
 *.png
 to_csv.py
 .ipynb_checkpoints/
-ui.py
 db.py
 *.sql
